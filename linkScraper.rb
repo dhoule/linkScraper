@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'uri'
+require 'open-uri'
+require 'rubyful_soup'
+
+begin
+	print "\nEnter full URL to crawl: "
+	url = gets
+	puts url
+	uri = URI.parse url
+	html = open(uri).read
+rescue Exception => e
+	print "Error occured: "
+	puts "#{e.inspect}"
+end
+
+soup = BeautifulSoup.new html
+
+links = soup.find_all('a').map { |a| a['href'] }
+
+links.delete_if { |l| l =~ /javascript|mailto/ }
+
+links.each do |l|
+	if l
+		begin
+			link = URI.parse l
+			link.scheme ||= 'http'
+			link.host ||= uri.host
+			link.path = uri.path + link.path unless link.path[0] == //
+			link = URI.parse link.to_s
+
+			open(link).read
+		rescue Exception => e
+			puts "#{link} failed because #{e}"
+		end
+	end
+end
+exit 0	
